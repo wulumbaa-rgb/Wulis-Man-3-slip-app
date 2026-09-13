@@ -131,5 +131,72 @@ function renderSlips(){
   document.getElementById('slips').innerHTML = html;
 }
 </script>
+let fixtures = [];
+let selectedGame = null;
+let slips = [[], [], []];
+
+// LOAD REAL FIXTURES FROM API
+async function loadFixtures() {
+  document.getElementById('fixtures').innerHTML = "Loading games... ⏳";
+  
+  const today = new Date().toISOString().split('T')[0];
+  // EPL + LaLiga + NPFL - you can add more
+  const url = `https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${today}&l=English%20Premier%20League`;
+  
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    fixtures = data.events || [];
+    
+    if(fixtures.length === 0) {
+      document.getElementById('fixtures').innerHTML = "No games today. Try tomorrow!";
+      return;
+    }
+    
+    let html = '';
+    fixtures.forEach((game, i) => {
+      // Create title for the game
+      let title = game.strHomeTeam + " vs " + game.strAwayTeam;
+      html += `<div style="background:#1a1a1a; padding:12px; margin:10px 0; border-radius:10px; border:1px solid #333;">
+        <b>${title}</b><br>
+        <small style="color:#aaa;">${game.strTime} - ${game.strLeague}</small><br>
+        <button onclick="selectFixture(${i})" style="margin-top:8px; padding:8px; background:#ff6600; border:none; border-radius:6px; color:white;">Select Game</button>
+      </div>`;
+    });
+    document.getElementById('fixtures').innerHTML = html;
+    
+  } catch(e) {
+    document.getElementById('fixtures').innerHTML = "Error loading games. Check internet.";
+  }
+}
+
+function selectFixture(i){
+  selectedGame = fixtures[i];
+  let title = selectedGame.strHomeTeam + " vs " + selectedGame.strAwayTeam;
+  alert('Selected: ' + title + '\nNow click which slip to add it to');
+}
+
+function addGameToSlip(slipIndex){
+  if(!selectedGame){ alert('Select a game first'); return; }
+  let title = selectedGame.strHomeTeam + " vs " + selectedGame.strAwayTeam;
+  let odd = prompt('Enter the odd from your betting app:');
+  let market = prompt('Pick market: 1X2, Over 2.5, or GG');
+  slips[slipIndex].push({game: title, odd: parseFloat(odd), market: market});
+  renderSlips();
+}
+
+function renderSlips(){
+  let html = '';
+  slips.forEach((slip, i) => {
+    let total = slip.reduce((a,b) => a * (b.odd || 1), 1).toFixed(2);
+    html += `<div class="slip"><h3>SLIP ${i+1} - Total: <span class="total">${total}</span></h3>`;
+    slip.forEach(g => {
+      html += `• ${g.game} | ${g.market} @ ${g.odd}<br>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('slips').innerHTML = html;
+}
+</script>
 </body>
-    </html>
+                                                                                             </html>
