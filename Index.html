@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wulumba Andrew 3 Slips</title>
+<style>
+body {font-family: Arial; background:#0a0a0a; color:white; padding:10px;}
+.header {text-align:center; padding:15px; background:#111; border-radius:12px; margin-bottom:12px; border:2px solid #00ff88;}
+.header img {width:80px; height:80px; border-radius:50%; margin-bottom:5px; object-fit:cover;}
+.login {background:#111; padding:20px; border-radius:12px; text-align:center; margin-top:50px; border:1px solid #00ff88;}
+input {width:80%; padding:12px; background:#333; color:white; border:1px solid #00ff88; border-radius:8px; text-align:center; font-size:18px;}
+.fixture {background:#1a1a1a; padding:10px; margin:8px 0; border-radius:10px; border-left:4px solid #00ff88;}
+.slip {background:#222; padding:12px; margin:10px 0; border-radius:12px;}
+button {background:#00ff88; color:#000; padding:12px; border:none; border-radius:8px; font-weight:bold; width:100%; margin:5px 0;}
+.total {font-size:20px; color:#00ff88;}
+.footer {text-align:center; font-size:12px; color:#666; margin-top:20px;}
+.hidden {display:none;}
+</style>
+</head>
+<body>
+
+<div id="loginScreen" class="login">
+  <h2>🔒 WULUMBA 3 SLIPS</h2>
+  <p>Enter PIN to continue</p>
+  <input type="password" id="pinInput" placeholder="Enter 4-digit PIN" maxlength="4">
+  <button onclick="checkPin()">Unlock App</button>
+  <p style="font-size:12px; color:#888;">Default PIN: 1234</p>
+</div>
+
+<div id="appScreen" class="hidden">
+  <div class="header">
+    <img src="wa_image_2502407307137238703" alt="Wulumba Andrew Logo">
+    <h1>WULUMBA ANDREW</h1>
+    <p>⚽ 3 Slips Strategy App</p>
+    <button onclick="logout()" style="background:red; color:white; width:auto; padding:5px 10px;">Logout</button>
+  </div>
+
+  <button onclick="loadFixtures()">📅 Load Today's Fixtures</button>
+  <div id="fixtures" style="color:orange;">Click button to load games</div>
+
+  <h3>Build Your 3 Slips</h3>
+  <div id="slips"></div>
+  <button onclick="addGameToSlip(0)">+ Add to Slip 1</button>
+  <button onclick="addGameToSlip(1)">+ Add to Slip 2</button>
+  <button onclick="addGameToSlip(2)">+ Add to Slip 3</button>
+
+  <div class="footer">
+    App by: Wulumba Andrew<br>
+    2026 | Play Responsibly
+  </div>
+</div>
+
+<script>
+const APP_PIN = "1234";
+
+let fixtures = [];
+let slips = [[],[],[]];
+
+if(localStorage.getItem("wulumba_loggedin") === "true"){
+  showApp();
+}
+
+function checkPin(){
+  let pin = document.getElementById("pinInput").value;
+  if(pin === APP_PIN){
+    localStorage.setItem("wulumba_loggedin", "true");
+    showApp();
+  } else {
+    alert("Wrong PIN!");
+  }
+}
+
+function showApp(){
+  document.getElementById("loginScreen").classList.add("hidden");
+  document.getElementById("appScreen").classList.remove("hidden");
+}
+
+function logout(){
+  localStorage.removeItem("wulumba_loggedin");
+  location.reload();
+}
+
+async function loadFixtures(){
+  document.getElementById('fixtures').innerHTML = 'Loading...';
+  try {
+    let res = await fetch('https://www.scorebat.com/video-api/v3/feed/');
+    let data = await res.json();
+    fixtures = data.response || [];
+    renderFixtures();
+  } catch(e){
+    document.getElementById('fixtures').innerHTML = 'Network error.';
+  }
+}
+
+function renderFixtures(){
+  let html = '';
+  fixtures.slice(0,20).forEach((f,i) => {
+    html += `<div class="fixture">
+      <b>${f.title}</b><br>
+      <small>${f.competition.name} | ${new Date(f.date).toLocaleTimeString()}</small><br>
+      <button onclick="selectFixture(${i})">Use This Game</button>
+    </div>`;
+  });
+  document.getElementById('fixtures').innerHTML = html;
+}
+
+let selectedGame = null;
+function selectFixture(i){
+  selectedGame = fixtures[i];
+  alert('Selected: ' + selectedGame.title + '\nNow click which slip to add it to');
+}
+
+function addGameToSlip(slipIndex){
+  if(!selectedGame){ alert('Select a game first'); return; }
+  let odd = prompt('Enter the odd from your betting app:');
+  let market = prompt('Pick market: 1X2, Over 2.5, or GG');
+  slips[slipIndex].push({game: selectedGame.title, odd: parseFloat(odd), market: market});
+  renderSlips();
+}
+
+function renderSlips(){
+  let html = '';
+  slips.forEach((slip, i) => {
+    let total = slip.reduce((a,b) => a * (b.odd || 1), 1).toFixed(2);
+    html += `<div class="slip"><h3>SLIP ${i+1} - Total: <span class="total">${total}</span></h3>`;
+    slip.forEach(g => {
+      html += `• ${g.game} | ${g.market} @ ${g.odd}<br>`;
+    });
+    html += `</div>`;
+  });
+  document.getElementById('slips').innerHTML = html;
+}
+</script>
+</body>
+    </html>
