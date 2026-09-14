@@ -1,202 +1,184 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Wulumba Andrew 3 Slips</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EEET Department - PQ & Notes Hub</title>
 <style>
-body {font-family: Arial; background:#0a0a0a; color:white; padding:10px;}
-.header {text-align:center; padding:15px; background:#111; border-radius:12px; margin-bottom:12px; border:2px solid #00ff88;}
-.header img {width:80px; height:80px; border-radius:50%; margin-bottom:5px; object-fit:cover;}
-.login {background:#111; padding:20px; border-radius:12px; text-align:center; margin-top:50px; border:1px solid #00ff88;}
-input {width:80%; padding:12px; background:#333; color:white; border:1px solid #00ff88; border-radius:8px; text-align:center; font-size:18px;}
-.fixture {background:#1a1a1a; padding:10px; margin:8px 0; border-radius:10px; border-left:4px solid #00ff88;}
-.slip {background:#222; padding:12px; margin:10px 0; border-radius:12px;}
-button {background:#00ff88; color:#000; padding:12px; border:none; border-radius:8px; font-weight:bold; width:100%; margin:5px 0;}
-.total {font-size:20px; color:#00ff88;}
-.footer {text-align:center; font-size:12px; color:#666; margin-top:20px;}
-.hidden {display:none;}
+  body { font-family: Arial, sans-serif; background: #f4f4f9; margin: 0; padding: 20px; }
+  .header { background: #004080; color: white; padding: 20px; text-align: center; border-radius: 10px; }
+  .search-box { margin: 20px 0; text-align: center; }
+  input, select { padding: 10px; width: 90%; max-width: 300px; border: 1px solid #ccc; border-radius: 5px; margin: 5px; }
+  button { padding: 10px 20px; background: #004080; color: white; border: none; border-radius: 5px; cursor: pointer; }
+  .card { background: white; padding: 15px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+  .card h3 { margin: 0; color: #004080; }
+  .tag { padding: 3px 8px; border-radius: 4px; font-size: 12px; margin-right: 5px; color: white;}
+  .tag.level {background: #007bff;}.tag.semester {background: #28a745;}.tag.type {background: #ffc107; color: black;}
+  a.download { background: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 10px; }
+  .download:disabled { background: #ccc; cursor: not-allowed; }
+  .loader,.loginBox { text-align: center; padding: 40px; }
+  .error { color: red; text-align: center; padding: 20px; }
+  #userInfo { background: #fff; padding: 10px; border-radius: 5px; margin-bottom: 10px; text-align: right; }
+  
+  .footer { 
+    text-align: center; 
+    margin-top: 40px; 
+    padding: 20px; 
+    background: #004080; 
+    color: white; 
+    border-radius: 10px;
+    font-size: 14px;
+  }
+  .footer h4 { margin: 5px 0; }
+  .footer p { margin: 5px 0; opacity: 0.9; }
+  .contact-btn { 
+    display: inline-block; 
+    background: #25D366; 
+    color: white; 
+    padding: 10px 20px; 
+    border-radius: 5px; 
+    text-decoration: none; 
+    margin: 5px;
+    font-weight: bold;
+  }
+  .admin-badge { background: #dc3545; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/paparse.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
-<div id="loginScreen" class="login">
-  <h2>🔒 WULUMBA 3 SLIPS</h2>
-  <p>Enter PIN to continue</p>
-  <input type="password" id="pinInput" placeholder="Enter 4-digit PIN" maxlength="4">
-  <button onclick="checkPin()">Unlock App</button>
-  <p style="font-size:12px; color:#888;">Default PIN: 1234</p>
+<div class="header">
+  <h1>⚡ EEET Department</h1>
+  <p>Past Questions & Lecture Notes Hub | ND1 - HND2</p>
 </div>
 
-<div id="appScreen" class="hidden">
-  <div class="header">
-    <img src="wa_image_2502407307137238703" alt="Wulumba Andrew Logo">
-    <h1>WULUMBA ANDREW</h1>
-    <p>⚽ 3 Slips Strategy App</p>
-    <button onclick="logout()" style="background:red; color:white; width:auto; padding:5px 10px;">Logout</button>
+<div id="loginBox" class="loginBox">
+  <h2>🔐 Sign in to Access EEET Hub</h2>
+  <p>Only EEET Students with Gmail</p>
+  <button onclick="signIn()" style="background:#DB4437; font-size:16px;">Sign in with Google</button>
+</div>
+
+<div id="app" style="display:none;">
+  <div id="userInfo"></div>
+  <div class="search-box">
+    <input type="text" id="searchCourse" placeholder="Search Course Code or Title" oninput="filterData()">
+    <select id="searchLevel" onchange="filterData()"><option value="">All Levels</option><option>ND1</option><option>ND2</option><option>HND1</option><option>HND2</option></select>
+    <select id="searchType" onchange="filterData()"><option value="">All Types</option><option>Past Question</option><option>Lecture Note</option></select>
+    <button onclick="logout()" style="background:#dc3545;">Logout</button>
   </div>
+  <div id="results"><div class="loader">Loading materials... ⏳</div></div>
+</div>
 
-  <button onclick="loadFixtures()">📅 Load Today's Fixtures</button>
-  <div id="fixtures" style="color:orange;">Click button to load games</div>
-
-  <h3>Build Your 3 Slips</h3>
-  <div id="slips"></div>
-  <button onclick="addGameToSlip(0)">+ Add to Slip 1</button>
-  <button onclick="addGameToSlip(1)">+ Add to Slip 2</button>
-  <button onclick="addGameToSlip(2)">+ Add to Slip 3</button>
-
-  <div class="footer">
-    App by: Wulumba Andrew<br>
-    2026 | Play Responsibly
-  </div>
+<div class="footer">
+  <h4>About EEET Hub</h4>
+  <p>This platform was created to help EEET students access Past Questions and Lecture Notes easily. 
+  Upload, Search, and Download materials for ND1 to HND2.</p>
+  <p><b>Developed by: Wulumba Andrew</b> <span class="admin-badge">ADMIN</span></p>
+  
+  <p><b>Contact Developer:</b></p>
+  <a href="https://wa.me/2349026966549?text=Hello%20Wulumba%20Andrew,%20I%20have%20a%20question%20about%20EEET%20Hub" target="_blank" class="contact-btn">
+    📱 Chat on WhatsApp: 09026966549
+  </a>
+  
+  <p><small>For EEET Department | Federal Polytechnic</small></p>
 </div>
 
 <script>
-const APP_PIN = "1234";
-
-let fixtures = [];
-let slips = [[],[],[]];
-
-if(localStorage.getItem("wulumba_loggedin") === "true"){
-  showApp();
+// ========== CONFIG ==========
+const CONFIG = {
+  SHEET_URL: "PASTE_YOUR_GOOGLE_SHEET_CSV_LINK_HERE",
+  ADMIN_EMAIL: "wulumbaandrew@gmail.com", // YOU ARE ADMIN
+  FIREBASE_CONFIG: {
+    apiKey: "PASTE_YOUR_FIREBASE_API_KEY",
+    authDomain: "eeet-hub.firebaseapp.com",
+    projectId: "eeet-hub",
+  }
 }
+// ============================
 
-function checkPin(){
-  let pin = document.getElementById("pinInput").value;
-  if(pin === APP_PIN){
-    localStorage.setItem("wulumba_loggedin", "true");
-    showApp();
+let allData = [];
+let currentUser = null;
+
+firebase.initializeApp(CONFIG.FIREBASE_CONFIG);
+
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    let adminTag = (user.email === CONFIG.ADMIN_EMAIL) ? ' <span class="admin-badge">ADMIN</span>' : '';
+    document.getElementById("userInfo").innerHTML = `Welcome, ${user.displayName}${adminTag} | <b>${user.email}</b>`;
+    loadData();
   } else {
-    alert("Wrong PIN!");
+    document.getElementById("loginBox").style.display = "block";
+    document.getElementById("app").style.display = "none";
   }
-}
+});
 
-function showApp(){
-  document.getElementById("loginScreen").classList.add("hidden");
-  document.getElementById("appScreen").classList.remove("hidden");
+function signIn() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithPopup(provider);
 }
+function logout() { firebase.auth().signOut(); }
 
-function logout(){
-  localStorage.removeItem("wulumba_loggedin");
-  location.reload();
-}
-
-async function loadFixtures(){
-  document.getElementById('fixtures').innerHTML = 'Loading...';
+async function loadData() {
   try {
-    let res = await fetch('https://www.scorebat.com/video-api/v3/feed/');
-    let data = await res.json();
-    fixtures = data.response || [];
-    renderFixtures();
-  } catch(e){
-    document.getElementById('fixtures').innerHTML = 'Network error.';
+    const response = await fetch(CONFIG.SHEET_URL);
+    if (!response.ok) throw new Error("Sheet not found");
+    const csvText = await response.text();
+    Papa.parse(csvText, {
+      header: true, skipEmptyLines: true,
+      complete: function(results) {
+        allData = results.data.filter(item => item['Status'] === 'Approved' || item['Status'] === '');
+        displayData(allData);
+      }
+    });
+  } catch (error) {
+    document.getElementById("results").innerHTML = `<div class="error">⚠️ No internet or Sheet not found.</div>`;
   }
 }
 
-function renderFixtures(){
-  let html = '';
-  fixtures.slice(0,20).forEach((f,i) => {
-    html += `<div class="fixture">
-      <b>${f.title}</b><br>
-      <small>${f.competition.name} | ${new Date(f.date).toLocaleTimeString()}</small><br>
-      <button onclick="selectFixture(${i})">Use This Game</button>
-    </div>`;
-  });
-  document.getElementById('fixtures').innerHTML = html;
-}
+function displayData(data) {
+  const results = document.getElementById("results");
+  if(data.length === 0) { results.innerHTML = `<p>No materials found. <button onclick="clearFilters()">Clear Filters</button></p>`; return; }
 
-let selectedGame = null;
-function selectFixture(i){
-  selectedGame = fixtures[i];
-  alert('Selected: ' + selectedGame.title + '\nNow click which slip to add it to');
-}
-
-function addGameToSlip(slipIndex){
-  if(!selectedGame){ alert('Select a game first'); return; }
-  let odd = prompt('Enter the odd from your betting app:');
-  let market = prompt('Pick market: 1X2, Over 2.5, or GG');
-  slips[slipIndex].push({game: selectedGame.title, odd: parseFloat(odd), market: market});
-  renderSlips();
-}
-
-function renderSlips(){
-  let html = '';
-  slips.forEach((slip, i) => {
-    let total = slip.reduce((a,b) => a * (b.odd || 1), 1).toFixed(2);
-    html += `<div class="slip"><h3>SLIP ${i+1} - Total: <span class="total">${total}</span></h3>`;
-    slip.forEach(g => {
-      html += `• ${g.game} | ${g.market} @ ${g.odd}<br>`;
-    });
-    html += `</div>`;
-  });
-  document.getElementById('slips').innerHTML = html;
-}
-</script>
-let fixtures = [];
-let selectedGame = null;
-let slips = [[], [], []];
-
-// LOAD REAL FIXTURES FROM API
-async function loadFixtures() {
-  document.getElementById('fixtures').innerHTML = "Loading games... ⏳";
-  
-  const today = new Date().toISOString().split('T')[0];
-  // EPL + LaLiga + NPFL - you can add more
-  const url = `https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${today}&l=English%20Premier%20League`;
-  
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    fixtures = data.events || [];
+  results.innerHTML = data.map(item => {
+    const hasFile = item['File Upload'] && item['File Upload'].startsWith('http');
+    const downloadBtn = hasFile? `<a class="download" href="${item['File Upload']}" target="_blank">⬇️ Download PDF</a>` : `<button class="download" disabled>File Not Available</button>`;
     
-    if(fixtures.length === 0) {
-      document.getElementById('fixtures').innerHTML = "No games today. Try tomorrow!";
-      return;
-    }
-    
-    let html = '';
-    fixtures.forEach((game, i) => {
-      // Create title for the game
-      let title = game.strHomeTeam + " vs " + game.strAwayTeam;
-      html += `<div style="background:#1a1a1a; padding:12px; margin:10px 0; border-radius:10px; border:1px solid #333;">
-        <b>${title}</b><br>
-        <small style="color:#aaa;">${game.strTime} - ${game.strLeague}</small><br>
-        <button onclick="selectFixture(${i})" style="margin-top:8px; padding:8px; background:#ff6600; border:none; border-radius:6px; color:white;">Select Game</button>
-      </div>`;
-    });
-    document.getElementById('fixtures').innerHTML = html;
-    
-  } catch(e) {
-    document.getElementById('fixtures').innerHTML = "Error loading games. Check internet.";
-  }
+    // ADMIN ONLY: See who uploaded + status
+    const adminBtn = (currentUser.email === CONFIG.ADMIN_EMAIL)? `<p style="color:red; font-size:12px;"><b>ADMIN VIEW:</b> ${item['Email']} | Status: ${item['Status']}</p>` : '';
+
+    return `
+    <div class="card">
+      <h3>${item['Course Code']} - ${item['Course Title']}</h3>
+      <span class="tag level">${item['Level']}</span>
+      <span class="tag semester">${item['Semester']}</span>
+      <span class="tag type">${item['File Type']}</span>
+      <p><b>Year:</b> ${item['Year']} | <b>Lecturer:</b> ${item['Lecturer Name']}</p>
+      <p><b>Uploaded by:</b> ${item['Full Name']}</p>
+      ${adminBtn}
+      ${downloadBtn}
+    </div>
+  `}).join("");
 }
 
-function selectFixture(i){
-  selectedGame = fixtures[i];
-  let title = selectedGame.strHomeTeam + " vs " + selectedGame.strAwayTeam;
-  alert('Selected: ' + title + '\nNow click which slip to add it to');
+function filterData() {
+  const course = document.getElementById("searchCourse").value.toLowerCase();
+  const level = document.getElementById("searchLevel").value;
+  const type = document.getElementById("searchType").value;
+  const filtered = allData.filter(item =>
+    (item['Course Code'].toLowerCase().includes(course) || item['Course Title'].toLowerCase().includes(course)) &&
+    (level === "" || item['Level'] === level) && (type === "" || item['File Type'] === type)
+  );
+  displayData(filtered);
 }
-
-function addGameToSlip(slipIndex){
-  if(!selectedGame){ alert('Select a game first'); return; }
-  let title = selectedGame.strHomeTeam + " vs " + selectedGame.strAwayTeam;
-  let odd = prompt('Enter the odd from your betting app:');
-  let market = prompt('Pick market: 1X2, Over 2.5, or GG');
-  slips[slipIndex].push({game: title, odd: parseFloat(odd), market: market});
-  renderSlips();
-}
-
-function renderSlips(){
-  let html = '';
-  slips.forEach((slip, i) => {
-    let total = slip.reduce((a,b) => a * (b.odd || 1), 1).toFixed(2);
-    html += `<div class="slip"><h3>SLIP ${i+1} - Total: <span class="total">${total}</span></h3>`;
-    slip.forEach(g => {
-      html += `• ${g.game} | ${g.market} @ ${g.odd}<br>`;
-    });
-    html += `</div>`;
-  });
-  document.getElementById('slips').innerHTML = html;
+function clearFilters() {
+  document.getElementById("searchCourse").value = ""; document.getElementById("searchLevel").value = ""; document.getElementById("searchType").value = "";
+  displayData(allData);
 }
 </script>
 </body>
-                                                                                             </html>
+</html>
